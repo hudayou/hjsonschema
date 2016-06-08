@@ -1,17 +1,16 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Validator.Draft4.Object.Properties where
 
+import           Import
+import           Prelude
+
 import           Control.Monad
-import           Data.Aeson
 import qualified Data.Aeson.Pointer     as P
 import qualified Data.HashMap.Strict    as H
-import qualified Data.Text              as T
 import           Data.Text.Encoding     (encodeUtf8)
 import qualified Text.Regex.PCRE.Heavy  as RE
 
 import           Data.Validator.Failure
-import           Import
 
 newtype Remaining = Remaining { _unRemaining :: HashMap Text Value }
 

@@ -1,10 +1,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
 
 module Data.Validator.Draft4.Object
   ( module Data.Validator.Draft4.Object
   , module Data.Validator.Draft4.Object.Properties
   ) where
+
+import           Import
+-- Hiding is for GHCs before 7.10:
+import           Prelude                                 hiding (all, concat,
+                                                          foldl)
 
 import           Data.Aeson.Types                        (Parser)
 import qualified Data.HashMap.Strict                     as H
@@ -15,11 +19,6 @@ import qualified Data.Text                               as T
 import           Data.Validator.Draft4.Object.Properties
 import           Data.Validator.Failure
 import           Data.Validator.Utils
-import           Import
-
--- For GHCs before 7.10:
-import           Prelude                                 hiding (all, concat,
-                                                          foldl)
 
 -- | The spec requires "maxProperties" to be non-negative.
 maxProperties :: Int -> HashMap Text Value -> Maybe (Failure ())

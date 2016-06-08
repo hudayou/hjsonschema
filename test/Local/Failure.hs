@@ -1,6 +1,8 @@
 
 module Local.Failure where
 
+import           Prelude
+
 import           Data.Aeson
 import qualified Data.Aeson.Pointer     as P
 import           Data.Monoid

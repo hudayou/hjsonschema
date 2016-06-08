@@ -1,6 +1,10 @@
 
 module Data.Validator.Draft4.Any where
 
+import           Import
+-- Hiding is for GHCs before 7.10:
+import           Prelude hiding           (any, elem)
+
 import           Control.Monad
 import           Data.Aeson.Types         (Parser)
 import           Data.List.NonEmpty       (NonEmpty)
@@ -13,10 +17,6 @@ import qualified Data.Set                 as S
 import           Data.Validator.Failure
 import           Data.Validator.Utils
 import           Data.Validator.Reference (resolveFragment, resolveReference)
-import           Import
-
--- For GHCs before 7.10:
-import           Prelude hiding           (any, elem)
 
 --------------------------------------------------
 -- * $ref

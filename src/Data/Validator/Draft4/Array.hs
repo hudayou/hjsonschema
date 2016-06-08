@@ -1,6 +1,9 @@
 
 module Data.Validator.Draft4.Array where
 
+import           Import
+import           Prelude
+
 import           Control.Monad
 import qualified Data.Aeson.Pointer     as P
 import qualified Data.Text              as T
@@ -9,7 +12,6 @@ import           Text.Read              (readMaybe)
 
 import           Data.Validator.Failure
 import           Data.Validator.Utils   (allUniqueValues)
-import           Import
 
 -- | The spec requires "maxItems" to be non-negative.
 maxItems :: Int -> Vector Value -> Maybe (Failure ())

@@ -19,13 +19,14 @@
 
 module Data.Validator.Reference where
 
+import           Import
+import           Prelude
+
 import qualified Data.Aeson.Pointer     as P
 import qualified Data.Text              as T
 import           Data.Text.Encoding
 import           Network.HTTP.Types.URI (urlDecode)
 import           System.FilePath        ((</>), dropFileName)
-
-import           Import
 
 type URIBase = Maybe Text
 type URIBaseAndFragment = (Maybe Text, Maybe Text)

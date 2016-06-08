@@ -29,10 +29,10 @@ example :: IO ()
 example = do
   res <- D4.fetchFilesystemAndValidate schemaContext badData
   case res of
-    Right () -> error "We validated bad data."
-    Left (D4.FVRead _) -> error ("Error fetching a referenced schema"
-                                ++ " (either during IO or parsing).")
-    Left (D4.FVSchema _) -> error "Our 'schema' itself was invalid."
+    Right ()                  -> error "We validated bad data."
+    Left (D4.FVRead _)        -> error ("Error fetching a referenced schema"
+                                        ++ " (either during IO or parsing).")
+    Left (D4.FVSchema _)      -> error "Our 'schema' itself was invalid."
     Left (D4.FVData failures) ->
       case NE.toList failures of
         [D4.Invalid (D4.Ref D4.UniqueItems) _ _] -> return () -- Success.

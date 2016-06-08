@@ -1,13 +1,14 @@
 
 module Data.Validator.Draft4.String where
 
-import           Data.Aeson
+import           Import
+import           Prelude
+
 import qualified Data.Text              as T
 import           Data.Text.Encoding     (encodeUtf8)
 import qualified Text.Regex.PCRE.Heavy  as RE
 
 import           Data.Validator.Failure
-import           Import
 
 -- | The spec requires "maxLength" to be non-negative.
 maxLength :: Int -> Text -> Maybe (Failure ())

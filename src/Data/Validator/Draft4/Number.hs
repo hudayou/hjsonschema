@@ -1,11 +1,13 @@
 
 module Data.Validator.Draft4.Number where
 
+import           Import
+import           Prelude
+
 import           Data.Fixed             (mod')
 import           Data.Scientific
 
 import           Data.Validator.Failure
-import           Import
 
 -- | The spec requires "multipleOf" to be positive.
 multipleOf :: Scientific -> Scientific -> Maybe (Failure ())

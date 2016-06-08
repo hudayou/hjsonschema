@@ -1,13 +1,11 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Validator.Failure where
 
-import qualified Data.Aeson.Pointer as P
-
 import           Import
+-- Hiding is for GHCs before 7.10:
+import           Prelude             hiding (concat, sequence)
 
--- For GHCs before 7.10:
-import           Prelude            hiding (concat, sequence)
+import qualified Data.Aeson.Pointer as P
 
 -- | Validators shouldn't know more about the schema they're going to
 -- be used with than necessary. If a validator throws errors using the

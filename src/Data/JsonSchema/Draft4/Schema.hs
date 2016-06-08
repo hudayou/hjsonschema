@@ -1,6 +1,9 @@
 
 module Data.JsonSchema.Draft4.Schema where
 
+import           Import
+import           Prelude
+
 import qualified Data.HashMap.Strict          as H
 import           Data.List.NonEmpty           (NonEmpty)
 import           Data.Maybe                   (fromJust, isJust)
@@ -10,7 +13,6 @@ import qualified Data.Validator.Draft4.Any    as AN
 import qualified Data.Validator.Draft4.Array  as AR
 import qualified Data.Validator.Draft4.Object as OB
 import           Data.Validator.Utils
-import           Import
 
 data Schema = Schema
   { _schemaVersion              :: Maybe Text
@@ -20,7 +22,7 @@ data Schema = Schema
   -- ^ A standardized location for embedding schemas
   -- to be referenced from elsewhere in the document.
   , _schemaOther                :: HashMap Text Value
-  -- ^ Since the JSON document this Schema was built from could
+  -- ^ Since the JSON document this schema was built from could
   -- contain schemas anywhere (not just in "definitions" or any
   -- of the other official keys) we save any leftover key/value
   -- pairs not covered by them here.

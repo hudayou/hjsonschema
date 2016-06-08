@@ -1,6 +1,9 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.JsonSchema.Fetch where
+
+import           Import
+-- Hiding is for GHCs before 7.10:
+import           Prelude                  hiding (concat, sequence)
 
 import           Control.Arrow            (left)
 import           Control.Exception        (catch)
@@ -12,41 +15,54 @@ import           Network.HTTP.Client
 
 import           Data.Validator.Reference (resolveReference,
                                            updateResolutionScope)
-import           Import
-
--- For GHCs before 7.10:
-import           Prelude                  hiding (concat, sequence)
 
 --------------------------------------------------
 -- * Types
 --------------------------------------------------
 
+-- | This is all the fetching functions need to know about a particular
+-- JSON Schema draft, e.g. JSON Schema Draft 4.
 data Spec schema = Spec
   { _ssEmbedded :: schema -> [schema]
   , _ssGetId    :: schema -> Maybe Text
   , _ssGetRef   :: schema -> Maybe Text
   }
 
-data SchemaWithURI schema = SchemaWithURI
-  { _swSchema :: !schema
-  , _swURI    :: !(Maybe Text)
-  -- ^ Must not include a URI fragment, e.g. use
-  -- "http://example.com/foo" not "http://example.com/foo#bar".
+data ReferencedSchemas schema = ReferencedSchemas
+  { _rsStarting  :: !schema
+  -- ^ Used to resolve relative references when we don't know what the scope
+  -- of the current schema is. This only happens with starting schemas
+  -- because if we're using a remote schema we had to know its URI in order
+  -- to fetch it.
   --
-  -- This is the URI identifying the document containing the schema.
-  -- It's different than the schema's "id" field, which controls scope
-  -- when resolving references contained in the schema.
-
-  -- TODO: Make the no URI fragment requirement unnecessary.
+  -- Tracking the starting schema (instead of just resolving the reference to
+  -- the current schema being used for validation) is necessary for cases
+  -- where schemas are embedded inside one another. For instance in this
+  -- case not distinguishing the starting and "foo" schemas sends the code
+  -- into an infinite loop:
+  --
+  -- {
+  --   "additionalProperties": false,
+  --   "properties": {
+  --     "foo": {
+  --       "$ref": "#"
+  --     }
+  --   }
+  -- }
+  , _rsSchemaMap :: !(URISchemaMap schema)
   } deriving (Eq, Show)
 
 -- | Keys are URIs (without URI fragments).
 type URISchemaMap schema = HashMap Text schema
 
-data ReferencedSchemas schema = ReferencedSchemas
-  { _rsStarting  :: !schema
-  -- ^ Used to resolve relative references.
-  , _rsSchemaMap :: !(URISchemaMap schema)
+data SchemaWithURI schema = SchemaWithURI
+  { _swSchema :: !schema
+  , _swURI    :: !(Maybe Text)
+  -- ^ This is the URI identifying the document containing the schema.
+  -- It's different than the schema's "id" field, which controls scope
+  -- when resolving references contained in the schema.
+
+  -- TODO: Make the no URI fragment requirement unnecessary.
   } deriving (Eq, Show)
 
 --------------------------------------------------
@@ -64,7 +80,7 @@ referencesViaHTTP'
   :: forall schema. FromJSON schema
   => Spec schema
   -> SchemaWithURI schema
-  -> IO (Either HTTPFailure (ReferencedSchemas schema))
+  -> IO (Either HTTPFailure (URISchemaMap schema))
 referencesViaHTTP' spec sw = do
   manager <- newManager defaultManagerSettings
   let f = referencesMethodAgnostic (get manager) spec sw
@@ -77,7 +93,7 @@ referencesViaHTTP' spec sw = do
 
     handler
       :: HttpException
-      -> IO (Either HTTPFailure (ReferencedSchemas schema))
+      -> IO (Either HTTPFailure (URISchemaMap schema))
     handler = pure . Left . HTTPRequestFailure
 
 --------------------------------------------------
@@ -93,10 +109,10 @@ referencesViaFilesystem'
   :: forall schema. FromJSON schema
   => Spec schema
   -> SchemaWithURI schema
-  -> IO (Either FilesystemFailure (ReferencedSchemas schema))
+  -> IO (Either FilesystemFailure (URISchemaMap schema))
 referencesViaFilesystem' spec sw = catch (left FSParseFailure <$> f) handler
   where
-    f :: IO (Either Text (ReferencedSchemas schema))
+    f :: IO (Either Text (URISchemaMap schema))
     f = referencesMethodAgnostic readFile' spec sw
 
     readFile' :: Text -> IO LBS.ByteString
@@ -104,7 +120,7 @@ referencesViaFilesystem' spec sw = catch (left FSParseFailure <$> f) handler
 
     handler
       :: IOError
-      -> IO (Either FilesystemFailure (ReferencedSchemas schema))
+      -> IO (Either FilesystemFailure (URISchemaMap schema))
     handler = pure . Left . FSReadFailure
 
 --------------------------------------------------
@@ -119,19 +135,18 @@ referencesMethodAgnostic
   => (Text -> IO LBS.ByteString)
   -> Spec schema
   -> SchemaWithURI schema
-  -> IO (Either Text (ReferencedSchemas schema))
-referencesMethodAgnostic fetchRef spec sw =
-  (fmap.fmap) (ReferencedSchemas (_swSchema sw))
-              (foldFunction fetchRef spec mempty sw)
+  -> IO (Either Text (URISchemaMap schema))
+referencesMethodAgnostic fetchRef spec =
+  getRecursiveReferences fetchRef spec mempty
 
-foldFunction
+getRecursiveReferences
   :: forall schema. FromJSON schema
   => (Text -> IO LBS.ByteString)
   -> Spec schema
   -> URISchemaMap schema
   -> SchemaWithURI schema
   -> IO (Either Text (URISchemaMap schema))
-foldFunction fetchRef spec@(Spec _ _ getRef) referenced sw =
+getRecursiveReferences fetchRef spec@(Spec _ _ getRef) referenced sw =
   foldlM f (Right referenced) (includeSubschemas spec sw)
   where
     f :: Either Text (URISchemaMap schema)
@@ -145,8 +160,9 @@ foldFunction fetchRef spec@(Spec _ _ getRef) referenced sw =
           bts <- fetchRef uri
           case eitherDecode bts of
             Left e     -> pure . Left . T.pack $ e
-            Right schm -> foldFunction fetchRef spec (H.insert uri schm g)
-                                       (SchemaWithURI schm (Just uri))
+            Right schm -> getRecursiveReferences
+                            fetchRef spec (H.insert uri schm g)
+                            (SchemaWithURI schm (Just uri))
       where
         newRef :: Maybe Text
         newRef

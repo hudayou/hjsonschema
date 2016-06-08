@@ -8,6 +8,7 @@ import           Data.Aeson
 import           Data.Aeson.TH
 import qualified Data.ByteString.Lazy   as LBS
 import           Data.Char              (toLower)
+import qualified Data.List.NonEmpty     as N
 import           Data.Monoid
 import           Data.Text              (Text)
 import qualified Data.Text              as T
@@ -44,8 +45,13 @@ instance FromJSON SchemaTest where
 instance FromJSON SchemaTestCase where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = fmap toLower . drop 3 }
 
-readSchemaTests :: String -> [String] -> IO [SchemaTest]
-readSchemaTests dir jsonFiles = concatMapM fileToCases jsonFiles
+readSchemaTests
+    :: String
+    -- ^ The path to a directory.
+    -> [String]
+    -- ^ The names of JSON files in that directory.
+    -> IO [SchemaTest]
+readSchemaTests dir = concatMapM fileToCases
   where
     -- Each file contains an array of SchemaTests, not just one.
     fileToCases :: String -> IO [SchemaTest]
@@ -61,28 +67,33 @@ readSchemaTests dir jsonFiles = concatMapM fileToCases jsonFiles
       { _stDescription = T.pack fileName <> ": " <> _stDescription s
       }
 
-    concatMapM :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
-    concatMapM f xs = liftM concat (mapM f xs)
+    -- | Can remove the Functor constraint after GHC 7.10.
+    concatMapM :: (Functor m, Monad m) => (a -> m [b]) -> [a] -> m [b]
+    concatMapM f xs = concat <$> mapM f xs
 
 toTest :: SchemaTest -> TestTree
 toTest st =
   HU.testCase (T.unpack (_stDescription st)) $ do
     forM_ (_stCases st) $ \sc -> do
-      g <- assertRight =<< D4.referencesViaHTTP (D4.SchemaWithURI (_stSchema st) Nothing)
-      validate <- assertRight . D4.checkSchema g $ D4.SchemaWithURI (_stSchema st) Nothing
-      let res = validate (_scData sc)
+      res <- D4.fetchHTTPAndValidate
+               (D4.SchemaWithURI (_stSchema st) Nothing)
+               (_scData sc)
+      let failures = case res of
+                       Right ()           -> mempty
+                       Left (D4.HVData a) -> N.toList a
+                       other              -> error (show other)
       if _scValid sc
-        then assertValid   sc res
-        else assertInvalid sc res
+          then assertValid   sc failures
+          else assertInvalid sc failures
 
 assertValid :: SchemaTestCase -> [D4.Invalid] -> HU.Assertion
 assertValid _ [] = pure ()
-assertValid sc errs =
+assertValid sc failures =
   HU.assertFailure $ unlines
     [ "    Failed to validate data"
     , "    Description: "         <> T.unpack (_scDescription sc)
     , "    Data: "                <> show (_scData sc)
-    , "    Validation failures: " <> show errs
+    , "    Validation failures: " <> show failures
     ]
 
 assertInvalid :: SchemaTestCase -> [D4.Invalid] -> HU.Assertion
@@ -93,7 +104,3 @@ assertInvalid sc [] =
     , "    Data: "        <> show (_scData sc)
     ]
 assertInvalid _ _ = pure ()
-
-assertRight :: (Show a) => Either a b -> IO b
-assertRight (Left e)  = HU.assertFailure (show e) >> fail "assertRight failed"
-assertRight (Right b) = pure b

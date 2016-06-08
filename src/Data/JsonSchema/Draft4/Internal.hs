@@ -1,7 +1,10 @@
 
 module Data.JsonSchema.Draft4.Internal where
 
-import           Data.Aeson
+import           Import
+-- Hiding is for GHCs before 7.10:
+import           Prelude                        hiding (concat)
+
 import qualified Data.HashMap.Strict            as H
 import qualified Data.List.NonEmpty             as N
 import           Data.Maybe                     (catMaybes, fromMaybe, isJust,
@@ -20,10 +23,6 @@ import qualified Data.Validator.Draft4.String   as ST
 import           Data.Validator.Failure         (modFailure, setFailure)
 import qualified Data.Validator.Failure         as FR
 import           Data.Validator.Reference       (updateResolutionScope)
-import           Import
-
--- For GHCs before 7.10:
-import           Prelude                        hiding (concat)
 
 --------------------------------------------------
 -- * Embedded Schemas

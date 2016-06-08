@@ -1,6 +1,9 @@
 
 module Data.Validator.Utils where
 
+import           Import
+import           Prelude
+
 import           Control.Arrow
 import qualified Data.HashMap.Strict  as H
 import           Data.List.NonEmpty   (NonEmpty)
@@ -10,8 +13,6 @@ import           Data.Set             (Set)
 import qualified Data.Set             as S
 import qualified Data.Text            as T
 import qualified Data.Vector          as V
-
-import           Import
 
 --------------------------------------------------
 -- * QuickCheck
