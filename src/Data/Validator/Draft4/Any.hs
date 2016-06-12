@@ -24,7 +24,7 @@ import           Data.Validator.Reference (resolveFragment, resolveReference)
 
 -- | Will return 'Nothing' if the reference can't be resolved.
 ref
-  :: forall err schema. (FromJSON schema, ToJSON schema, Show schema)
+  :: forall err schema. (FromJSON schema, ToJSON schema)
   => Maybe Text
   -> (Maybe Text -> Maybe schema)
   -> (Maybe Text -> schema -> Value -> [Failure err])

@@ -40,7 +40,7 @@ resolveReference :: URIBase -> Text -> URIBaseAndFragment
 resolveReference mScope t = baseAndFragment $ resolveScopeAgainst mScope t
 
 resolveFragment
-  :: (FromJSON schema, ToJSON schema, Show schema)
+  :: (FromJSON schema, ToJSON schema)
   => Maybe Text
   -> schema
   -> Maybe schema

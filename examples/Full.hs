@@ -1,9 +1,15 @@
--- | Step by step validation using 'D4.referencesViaFilesystem' and
--- 'D4.checkSchema'. This means the actual validation invovles no IO.
+-- | Two differences from @examples/Simple.hs@:
+--
+-- * This shows how to write the starting schema in Haskell instead
+-- of parsing it from JSON.
+--
+-- * Validation is done in two steps using 'D4.referencesViaFilesystem' and
+-- 'D4.checkSchema' instead of 'D4.fetchFilesystemAndValidate'. This means
+-- that the actual validation involves no IO.
 
 module Full where
 
-import           Data.Aeson
+import           Data.Aeson             (Value (..), toJSON)
 
 import qualified Data.JsonSchema.Draft4 as D4
 
@@ -13,7 +19,7 @@ schema = D4.emptySchema { D4._schemaRef = Just "./unique.json" }
 schemaContext :: D4.SchemaWithURI D4.Schema
 schemaContext = D4.SchemaWithURI
   { D4._swSchema = schema
-  , D4._swURI    = Just "./examples/json/imaginary.json"
+  , D4._swURI    = Just "./examples/json/start.json"
   }
 
 badData :: Value
