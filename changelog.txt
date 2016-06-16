@@ -1,3 +1,17 @@
++ Add a new `referencesToValidity` function.
++ `checkSchema` now check referenced schema's validity in addition to the
+starting schema's validity. This change bubbles up to the one-step validation
+functions as well.
++ Switch most of the fetching code to use `URISchemaMap` instead of
+`ReferencedSchemas`. It didn't need to know about the more complicated data
+type.
++ Fix a misuse of the file-embed package that caused problem including
+hjsonschema locally in other projects.
+
+# 0.10.0.2
+
++ Enable GHC 8.
+
 # 0.10.0.1
 
 + Fix .cabal file.

@@ -4,6 +4,8 @@ A Haskell implementation of the current [JSON Schema](http://json-schema.org/) s
 
 [Hackage](https://hackage.haskell.org/package/hjsonschema) / [GitHub](https://github.com/seagreen/hjsonschema) / [Travis CI](https://travis-ci.org/seagreen/hjsonschema)
 
+Requires [pcre](http://www.pcre.org/) (`pkgs.pcre` in Nixpkgs).
+
 NOTE: You CANNOT use untrusted JSON data to make schemas. Schemas with circular references can cause infinite loops. See the issue list for more info.
 
 # Example

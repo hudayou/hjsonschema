@@ -41,7 +41,8 @@ import           Prelude
 import           Control.Applicative
 import           Control.Arrow                   (first, left)
 import qualified Data.ByteString.Lazy            as LBS
-import           Data.FileEmbed
+import           Data.FileEmbed                  (embedFile,
+                                                  makeRelativeToProject)
 import qualified Data.HashMap.Strict             as H
 import           Data.List.NonEmpty              (NonEmpty)
 import qualified Data.List.NonEmpty              as N
@@ -153,7 +154,9 @@ schemaValidity = IN.runValidate referenced (SchemaWithURI d4 Nothing) . toJSON
   where
     d4 :: Schema
     d4 = fromMaybe (error "Schema decode failed (this should never happen)")
-       . decode . LBS.fromStrict $ $(embedFile "src/draft4.json")
+       . decode
+       . LBS.fromStrict
+       $ $(makeRelativeToProject "src/draft4.json" >>= embedFile)
 
     referenced :: ReferencedSchemas Schema
     referenced = ReferencedSchemas
